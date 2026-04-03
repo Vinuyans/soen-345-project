@@ -1,3 +1,66 @@
 <resources>
-    <string name="app_name">project</string>
+    <string name="app_name">Ticket Reservation</string>
+    <string name="loading">Loading...</string>
+    <string name="error_profile_not_found">Could not load your profile. Please log in again.</string>
+
+    <string name="login_title">Welcome Back</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="create_account">Create Account</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="contact">Phone Number or Email</string>
+    <string name="home_address">Home Address</string>
+    <string name="admin_signup">Sign up as Admin</string>
+    <string name="admin_code">Admin Code</string>
+    <string name="register">Register</string>
+    <string name="logout">Logout</string>
+
+    <string name="feed">Feed</string>
+    <string name="reservations">Reservations</string>
+    <string name="my_events">My Events</string>
+    <string name="book">Book</string>
+    <string name="booked">Booked</string>
+    <string name="cancel">Cancel</string>
+    <string name="add_event">Add Event</string>
+    <string name="edit_event">Edit Event</string>
+    <string name="save">Save</string>
+    <string name="event_name">Event Name</string>
+    <string name="event_location">Location</string>
+    <string name="event_date">Date</string>
+    <string name="event_category">Category</string>
+    <string name="search">Search</string>
+    <string name="filter_date">Filter by date</string>
+    <string name="filter_location">Filter by location</string>
+    <string name="filter_category">Filter by category</string>
+    <string name="no_events">No events found.</string>
+    <string name="no_reservations">No reservations yet.</string>
+    <string name="notification_sent">Confirmation notification queued.</string>
+    <string name="notification_failed">Could not send confirmation.</string>
+    <string name="reservation_cancelled">Reservation cancelled.</string>
+    <string name="event_cancelled">Event cancelled.</string>
+
+    <string name="error_fill_required">Please fill all required fields.</string>
+    <string name="error_password_short">Password must be at least 6 characters.</string>
+    <string name="error_admin_code_invalid">Invalid admin code.</string>
+    <string name="error_login_failed">Login failed.</string>
+    <string name="error_register_failed">Registration failed.</string>
+    <string name="error_event_save_failed">Could not save event.</string>
+    <string name="error_reservation_failed">Could not reserve ticket.</string>
+
+    <string name="category_all">All</string>
+    <string name="category_movie">Movie</string>
+    <string name="category_concert">Concert</string>
+    <string name="category_travel">Travel</string>
+    <string name="category_sports">Sports</string>
+    <string name="category_other">Other</string>
+    <string-array name="event_categories">
+        <item>@string/category_all</item>
+        <item>@string/category_movie</item>
+        <item>@string/category_concert</item>
+        <item>@string/category_travel</item>
+        <item>@string/category_sports</item>
+        <item>@string/category_other</item>
+    </string-array>
 </resources>
