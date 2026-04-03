@@ -10,12 +10,15 @@
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/filter_date">
+        android:hint="@string/filter_date_range">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/dateFilterInput"
+            android:id="@+id/dateRangeFilterInput"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="false"
+            android:inputType="none" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -49,7 +52,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="@string/search" />
+        android:text="@string/reset_filters" />
 
     <TextView
         android:id="@+id/emptyStateText"

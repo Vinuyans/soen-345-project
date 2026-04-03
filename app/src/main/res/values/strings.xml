@@ -31,7 +31,11 @@
     <string name="event_date">Date</string>
     <string name="event_category">Category</string>
     <string name="search">Search</string>
+    <string name="reset_filters">Reset Filters</string>
     <string name="filter_date">Filter by date</string>
+    <string name="filter_date_range">Date range</string>
+    <string name="filter_date_from">Date from</string>
+    <string name="filter_date_to">Date to</string>
     <string name="filter_location">Filter by location</string>
     <string name="filter_category">Filter by category</string>
     <string name="no_events">No events found.</string>

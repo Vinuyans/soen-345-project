@@ -1,6 +1,8 @@
 package com.example.project.ui.user
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +23,10 @@ import com.example.project.data.repository.NotificationRepository
 import com.example.project.data.repository.ReservationRepository
 import com.example.project.data.repository.UserRepository
 import com.example.project.ui.common.EventAdapter
+import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class UserFeedFragment : Fragment() {
     private val eventRepository = EventRepository()
@@ -32,6 +38,9 @@ class UserFeedFragment : Fragment() {
     private lateinit var eventAdapter: EventAdapter
     private var allEvents: List<Event> = emptyList()
     private var bookedEventIds: Set<String> = emptySet()
+    private val dateFormatter = SimpleDateFormat(DATE_PATTERN, Locale.getDefault())
+    private var selectedStartDateMillis: Long? = null
+    private var selectedEndDateMillis: Long? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,7 +53,7 @@ class UserFeedFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val recyclerView = view.findViewById<RecyclerView>(R.id.eventsRecyclerView)
-        val searchButton = view.findViewById<Button>(R.id.searchButton)
+        val resetButton = view.findViewById<Button>(R.id.searchButton)
 
         eventAdapter = EventAdapter(
             canBook = true,
@@ -55,8 +64,10 @@ class UserFeedFragment : Fragment() {
         recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         recyclerView.adapter = eventAdapter
 
+        setupDateRangeInput(view)
         setupCategoryDropdown(view)
-        searchButton.setOnClickListener { applyFilters(view) }
+        setupAutomaticFiltering(view)
+        resetButton.setOnClickListener { resetFilters(view) }
 
         loadEvents(view)
     }
@@ -73,6 +84,43 @@ class UserFeedFragment : Fragment() {
             ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, categories)
         )
         categoryInput.setText(getString(R.string.category_all), false)
+    }
+
+    private fun setupDateRangeInput(root: View) {
+        val dateRangeInput = root.findViewById<EditText>(R.id.dateRangeFilterInput)
+        dateRangeInput.setOnClickListener {
+            showDateRangePicker(dateRangeInput)
+        }
+    }
+
+    private fun setupAutomaticFiltering(root: View) {
+        val locationInput = root.findViewById<EditText>(R.id.locationFilterInput)
+        val categoryInput = root.findViewById<AutoCompleteTextView>(R.id.categoryInput)
+
+        locationInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                applyFilters(root)
+            }
+        })
+
+        categoryInput.setOnItemClickListener { _, _, _, _ ->
+            applyFilters(root)
+        }
+    }
+
+    private fun resetFilters(root: View) {
+        val dateRangeInput = root.findViewById<EditText>(R.id.dateRangeFilterInput)
+        val locationInput = root.findViewById<EditText>(R.id.locationFilterInput)
+        val categoryInput = root.findViewById<AutoCompleteTextView>(R.id.categoryInput)
+
+        selectedStartDateMillis = null
+        selectedEndDateMillis = null
+        dateRangeInput.setText("")
+        locationInput.setText("")
+        categoryInput.setText(getString(R.string.category_all), false)
+        applyFilters(root)
     }
 
     private fun loadEvents(root: View) {
@@ -106,12 +154,17 @@ class UserFeedFragment : Fragment() {
 
     private fun applyFilters(root: View) {
         val emptyText = root.findViewById<TextView>(R.id.emptyStateText)
-        val dateFilter = root.findViewById<EditText>(R.id.dateFilterInput).text.toString().trim()
         val locationFilter = root.findViewById<EditText>(R.id.locationFilterInput).text.toString().trim()
         val categoryFilter = root.findViewById<AutoCompleteTextView>(R.id.categoryInput).text.toString().trim()
 
         val filtered = allEvents.filter { event ->
-            val matchesDate = dateFilter.isBlank() || event.date.contains(dateFilter, ignoreCase = true)
+            val eventDate = parseDate(event.date)?.time
+            val matchesDate = when {
+                eventDate == null -> selectedStartDateMillis == null || selectedEndDateMillis == null
+                selectedStartDateMillis != null && selectedEndDateMillis != null ->
+                    eventDate in selectedStartDateMillis!!..selectedEndDateMillis!!
+                else -> true
+            }
             val matchesLocation = locationFilter.isBlank() || event.location.contains(locationFilter, ignoreCase = true)
             val matchesCategory = categoryFilter.isBlank() || categoryFilter == getString(R.string.category_all) || event.category.equals(categoryFilter, ignoreCase = true)
             matchesDate && matchesLocation && matchesCategory
@@ -153,5 +206,34 @@ class UserFeedFragment : Fragment() {
                 }
             )
         }
+    }
+
+    private fun showDateRangePicker(targetInput: EditText) {
+        val pickerBuilder = MaterialDatePicker.Builder.dateRangePicker()
+        pickerBuilder.setTitleText(getString(R.string.filter_date_range))
+        if (selectedStartDateMillis != null && selectedEndDateMillis != null) {
+            pickerBuilder.setSelection(androidx.core.util.Pair(selectedStartDateMillis, selectedEndDateMillis))
+        }
+        val picker = pickerBuilder.build()
+        picker.addOnPositiveButtonClickListener(
+            MaterialPickerOnPositiveButtonClickListener { selection ->
+                selectedStartDateMillis = selection.first
+                selectedEndDateMillis = selection.second
+                val startText = selection.first?.let { dateFormatter.format(it) }.orEmpty()
+                val endText = selection.second?.let { dateFormatter.format(it) }.orEmpty()
+                targetInput.setText("$startText - $endText")
+                view?.let { applyFilters(it) }
+            }
+        )
+        picker.show(parentFragmentManager, DATE_RANGE_PICKER_TAG)
+    }
+
+    private fun parseDate(value: String) = runCatching {
+        if (value.isBlank()) null else dateFormatter.parse(value)
+    }.getOrNull()
+
+    companion object {
+        private const val DATE_PATTERN = "yyyy-MM-dd"
+        private const val DATE_RANGE_PICKER_TAG = "user_date_range_picker"
     }
 }
