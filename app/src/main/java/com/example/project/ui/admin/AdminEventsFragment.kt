@@ -73,6 +73,8 @@ class AdminEventsFragment : Fragment() {
         intent.putExtra(EventFormActivity.EXTRA_LOCATION, event.location)
         intent.putExtra(EventFormActivity.EXTRA_DATE, event.date)
         intent.putExtra(EventFormActivity.EXTRA_CATEGORY, event.category)
+        intent.putExtra(EventFormActivity.EXTRA_DESCRIPTION, event.description)
+        intent.putExtra(EventFormActivity.EXTRA_PRICE, event.price)
         startActivity(intent)
     }
 

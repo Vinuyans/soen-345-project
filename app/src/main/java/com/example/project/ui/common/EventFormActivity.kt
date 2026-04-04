@@ -36,6 +36,8 @@ class EventFormActivity : AppCompatActivity() {
         val locationInput = findViewById<EditText>(R.id.eventLocationInput)
         val dateInput = findViewById<EditText>(R.id.eventDateInput)
         val categoryInput = findViewById<AutoCompleteTextView>(R.id.eventCategoryInput)
+        val descriptionInput = findViewById<EditText>(R.id.eventDescriptionInput)
+        val priceInput = findViewById<EditText>(R.id.eventPriceInput)
         val saveButton = findViewById<Button>(R.id.saveEventButton)
 
         val categories = resources.getStringArray(R.array.event_categories).drop(1)
@@ -59,6 +61,9 @@ class EventFormActivity : AppCompatActivity() {
             locationInput.setText(intent.getStringExtra(EXTRA_LOCATION).orEmpty())
             dateInput.setText(intent.getStringExtra(EXTRA_DATE).orEmpty())
             categoryInput.setText(intent.getStringExtra(EXTRA_CATEGORY).orEmpty(), false)
+            descriptionInput.setText(intent.getStringExtra(EXTRA_DESCRIPTION).orEmpty())
+            val savedPrice = intent.getDoubleExtra(EXTRA_PRICE, 0.0)
+            if (savedPrice > 0.0) priceInput.setText(savedPrice.toString())
         } else {
             title = getString(R.string.add_event)
         }
@@ -68,6 +73,8 @@ class EventFormActivity : AppCompatActivity() {
             val location = locationInput.text.toString().trim()
             val date = dateInput.text.toString().trim()
             val category = categoryInput.text.toString().trim()
+            val description = descriptionInput.text.toString().trim()
+            val price = priceInput.text.toString().trim().toDoubleOrNull() ?: 0.0
 
             if (name.isBlank() || location.isBlank() || date.isBlank() || category.isBlank()) {
                 Toast.makeText(this, getString(R.string.error_fill_required), Toast.LENGTH_SHORT).show()
@@ -81,6 +88,8 @@ class EventFormActivity : AppCompatActivity() {
                 location = location,
                 date = date,
                 category = category,
+                description = description,
+                price = price,
                 createdBy = uid,
                 cancelled = false
             )
@@ -133,6 +142,8 @@ class EventFormActivity : AppCompatActivity() {
         const val EXTRA_LOCATION = "event_location"
         const val EXTRA_DATE = "event_date"
         const val EXTRA_CATEGORY = "event_category"
+        const val EXTRA_DESCRIPTION = "event_description"
+        const val EXTRA_PRICE = "event_price"
 
         private const val DATE_PATTERN = "yyyy-MM-dd"
     }
