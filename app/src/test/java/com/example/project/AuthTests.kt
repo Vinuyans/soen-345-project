@@ -8,42 +8,102 @@ import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.experimental.runners.Enclosed
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
+@RunWith(Enclosed::class)
 class AuthTests {
 
-    private val authRepository = mockk<AuthRepository>()
+    class GeneralTests {
+        private val authRepository = mockk<AuthRepository>()
 
-    @Test
-    fun `Register with valid email - account created`() {
-        val user = AppUser(email = "user@example.com")
-        every { authRepository.register(any(), any(), any(), any(), any()) } answers {
-            val onSuccess = invocation.args[3] as () -> Unit
-            onSuccess()
+        @Test
+        fun `Register with valid email - account created`() {
+            val user = AppUser(email = "user@example.com")
+            every { authRepository.register(any(), any(), any(), any(), any()) } answers {
+                val onSuccess = invocation.args[3] as () -> Unit
+                onSuccess()
+            }
+
+            var success = false
+            authRepository.register("user@example.com", "pass123", user, { success = true }, {})
+
+            assertTrue(success)
+            verify { authRepository.register("user@example.com", "pass123", user, any(), any()) }
         }
 
-        var success = false
-        authRepository.register("user@example.com", "pass123", user, { success = true }, {})
+        @Test
+        fun `Register with already used email - error shown`() {
+            val user = AppUser(email = "used@example.com")
+            val errorMsg = "The email address is already in use by another account."
+            every { authRepository.register(any(), any(), any(), any(), any()) } answers {
+                val onError = invocation.args[4] as (String) -> Unit
+                onError(errorMsg)
+            }
 
-        assertTrue(success)
-        verify { authRepository.register("user@example.com", "pass123", user, any(), any()) }
+            var errorReceived = ""
+            authRepository.register("used@example.com", "pass123", user, {}, { errorReceived = it })
+
+            assertEquals(errorMsg, errorReceived)
+        }
+
+        @Test
+        fun `Register with invalid email format - validation error`() {
+            val user = AppUser(email = "invalid-email")
+            val errorMsg = "The email address is badly formatted."
+            every { authRepository.register(any(), any(), any(), any(), any()) } answers {
+                val onError = invocation.args[4] as (String) -> Unit
+                onError(errorMsg)
+            }
+
+            var errorReceived = ""
+            authRepository.register("invalid-email", "pass123", user, {}, { errorReceived = it })
+
+            assertEquals(errorMsg, errorReceived)
+        }
+
+        @Test
+        fun `Submit empty fields - handled by caller or repo`() {
+            val user = AppUser(email = "")
+            val errorMsg = "Email cannot be empty"
+            every { authRepository.register("", any(), any(), any(), any()) } answers {
+                val onError = invocation.args[4] as (String) -> Unit
+                onError(errorMsg)
+            }
+
+            var errorReceived = ""
+            authRepository.register("", "pass123", user, {}, { errorReceived = it })
+
+            assertEquals(errorMsg, errorReceived)
+        }
     }
 
-    @Test
-    fun `Register with valid phone number - account created`() {
-        val validPhones = listOf(
-            "1234567890",
-            "+1-123-456-7890",
-            "+44 20 7946 0958",
-            "514.555.0199",
-            "+33123456789"
-        )
-        
-        every { authRepository.register(any(), any(), any(), any(), any()) } answers {
-            val onSuccess = invocation.args[3] as () -> Unit
-            onSuccess()
+    @RunWith(Parameterized::class)
+    class ValidPhoneRegistrationTests(private val phone: String) {
+        private val authRepository = mockk<AuthRepository>()
+
+        companion object {
+            @JvmStatic
+            @Parameterized.Parameters(name = "phone={0}")
+            fun data(): Collection<Array<String>> {
+                return listOf(
+                    arrayOf("1234567890"),
+                    arrayOf("+1-123-456-7890"),
+                    arrayOf("+44 20 7946 0958"),
+                    arrayOf("514.555.0199"),
+                    arrayOf("+33123456789")
+                )
+            }
         }
 
-        validPhones.forEach { phone ->
+        @Test
+        fun `Register with valid phone number - account created`() {
+            every { authRepository.register(any(), any(), any(), any(), any()) } answers {
+                val onSuccess = invocation.args[3] as () -> Unit
+                onSuccess()
+            }
+
             val user = AppUser(contact = phone, email = "$phone@phone.com")
             var success = false
             authRepository.register("$phone@phone.com", "pass123", user, { success = true }, {})
@@ -51,78 +111,43 @@ class AuthTests {
         }
     }
 
-    @Test
-    fun `Register with already used email - error shown`() {
-        val user = AppUser(email = "used@example.com")
-        val errorMsg = "The email address is already in use by another account."
-        every { authRepository.register(any(), any(), any(), any(), any()) } answers {
-            val onError = invocation.args[4] as (String) -> Unit
-            onError(errorMsg)
-        }
+    @RunWith(Parameterized::class)
+    class InvalidPhoneRegistrationTests(private val phone: String) {
+        private val authRepository = mockk<AuthRepository>()
 
-        var errorReceived = ""
-        authRepository.register("used@example.com", "pass123", user, {}, { errorReceived = it })
-
-        assertEquals(errorMsg, errorReceived)
-    }
-
-    @Test
-    fun `Register with invalid email format - validation error`() {
-        val user = AppUser(email = "invalid-email")
-        val errorMsg = "The email address is badly formatted."
-        every { authRepository.register(any(), any(), any(), any(), any()) } answers {
-            val onError = invocation.args[4] as (String) -> Unit
-            onError(errorMsg)
-        }
-
-        var errorReceived = ""
-        authRepository.register("invalid-email", "pass123", user, {}, { errorReceived = it })
-
-        assertEquals(errorMsg, errorReceived)
-    }
-
-    @Test
-    fun `Register with invalid phone number - validation error`() {
-        val invalidPhones = listOf(
-            "123",                // Too short
-            "12345678901234567", // Too long (assuming 15 max)
-            "not-a-number"       // Not numeric
-        )
-        val errorMsg = "Invalid phone number format."
-        
-        every { authRepository.register(any(), any(), any(), any(), any()) } answers {
-            val userArg = invocation.args[2] as AppUser
-            val phone = userArg.contact
-            // Simulate validation logic: 7-15 digits, allows +, -, ., space, ()
-            val isValid = phone.length in 7..15 && phone.all { it.isDigit() || it in "+- .()" }
-            
-            if (isValid) {
-                (invocation.args[3] as () -> Unit).invoke()
-            } else {
-                (invocation.args[4] as (String) -> Unit).invoke(errorMsg)
+        companion object {
+            @JvmStatic
+            @Parameterized.Parameters(name = "phone={0}")
+            fun data(): Collection<Array<String>> {
+                return listOf(
+                    arrayOf("123"),                // Too short
+                    arrayOf("12345678901234567"), // Too long
+                    arrayOf("not-a-number")       // Not numeric
+                )
             }
         }
 
-        invalidPhones.forEach { phone ->
+        @Test
+        fun `Register with invalid phone number - validation error`() {
+            val errorMsg = "Invalid phone number format."
+            
+            every { authRepository.register(any(), any(), any(), any(), any()) } answers {
+                val userArg = invocation.args[2] as AppUser
+                val p = userArg.contact
+                // Simulate validation logic: 7-15 digits, allows +, -, ., space, ()
+                val isValid = p.length in 7..15 && p.all { it.isDigit() || it in "+- .()" }
+                
+                if (isValid) {
+                    (invocation.args[3] as () -> Unit).invoke()
+                } else {
+                    (invocation.args[4] as (String) -> Unit).invoke(errorMsg)
+                }
+            }
+
             val user = AppUser(contact = phone)
             var errorReceived = ""
             authRepository.register("$phone@phone.com", "pass123", user, {}, { errorReceived = it })
             assertEquals("Should fail for phone: $phone", errorMsg, errorReceived)
         }
-    }
-
-    @Test
-    fun `Submit empty fields - handled by caller or repo`() {
-        val user = AppUser(email = "")
-        val errorMsg = "Email cannot be empty"
-        every { authRepository.register("", any(), any(), any(), any()) } answers {
-            val onError = invocation.args[4] as (String) -> Unit
-            onError(errorMsg)
-        }
-
-        var errorReceived = ""
-        authRepository.register("", "pass123", user, {}, { errorReceived = it })
-
-        assertEquals(errorMsg, errorReceived)
     }
 }
