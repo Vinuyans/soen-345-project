@@ -1,10 +1,12 @@
 package com.example.project.ui.common
 
+import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.project.R
 import com.example.project.data.model.Reservation
@@ -39,9 +41,20 @@ class ReservationAdapter(
         private val cancelButton: Button = itemView.findViewById(R.id.cancelReservationButton)
 
         fun bind(item: Reservation, onCancel: (Reservation) -> Unit) {
+            val ctx = itemView.context
             titleText.text = item.eventName
             detailsText.text = "${item.location} • ${item.date} • ${item.category}"
-            statusText.text = item.status
+            statusText.text = item.status.replaceFirstChar { it.uppercase() }
+
+            val statusColor = if (item.status == "active")
+                ContextCompat.getColor(ctx, R.color.status_available)
+            else
+                ContextCompat.getColor(ctx, R.color.status_cancelled)
+            val badge = GradientDrawable()
+            badge.cornerRadius = 40f
+            badge.setColor(statusColor)
+            statusText.background = badge
+
             cancelButton.visibility = if (item.status == "active") View.VISIBLE else View.GONE
             cancelButton.setOnClickListener { onCancel(item) }
         }

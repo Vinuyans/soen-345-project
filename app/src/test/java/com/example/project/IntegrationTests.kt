@@ -22,11 +22,8 @@ class IntegrationTests {
 
     @Before
     fun setup() {
-        // 1. Mock Process.myPid() to prevent Firebase SDK from crashing in unit tests
         mockkStatic(Process::class)
         every { Process.myPid() } returns 1
-
-        // 2. Mock Firebase static entry points
         mockkStatic(FirebaseApp::class)
         
         val mockApp = mockk<FirebaseApp>(relaxed = true)
@@ -35,7 +32,6 @@ class IntegrationTests {
         val mockFunctions = mockk<FirebaseFunctions>(relaxed = true)
         val mockRef = mockk<DatabaseReference>(relaxed = true)
 
-        // Helper to mock companion objects using reflection to avoid "Unresolved reference" issues
         fun mockCompanion(clazz: java.lang.Class<*>) {
             try {
                 val companionField = clazz.getDeclaredField("Companion")
@@ -45,7 +41,6 @@ class IntegrationTests {
                     mockkObject(companionObject)
                 }
             } catch (e: Exception) {
-                // If no companion, fallback to static mocking of the class itself
                 mockkStatic(clazz.kotlin)
             }
         }
@@ -54,7 +49,6 @@ class IntegrationTests {
         mockCompanion(FirebaseAuth::class.java)
         mockCompanion(FirebaseFunctions::class.java)
 
-        // 3. Setup behavior for common Firebase calls
         every { FirebaseApp.getInstance() } returns mockApp
         every { FirebaseApp.getInstance(any()) } returns mockApp
         

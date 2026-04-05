@@ -30,17 +30,25 @@ class AuthTests {
 
     @Test
     fun `Register with valid phone number - account created`() {
-        // Assuming phone number registration uses the same method or a simulated one
-        val user = AppUser(contact = "1234567890", email = "1234567890@phone.com")
+        val validPhones = listOf(
+            "1234567890",
+            "+1-123-456-7890",
+            "+44 20 7946 0958",
+            "514.555.0199",
+            "+33123456789"
+        )
+        
         every { authRepository.register(any(), any(), any(), any(), any()) } answers {
             val onSuccess = invocation.args[3] as () -> Unit
             onSuccess()
         }
 
-        var success = false
-        authRepository.register("1234567890@phone.com", "pass123", user, { success = true }, {})
-
-        assertTrue(success)
+        validPhones.forEach { phone ->
+            val user = AppUser(contact = phone, email = "$phone@phone.com")
+            var success = false
+            authRepository.register("$phone@phone.com", "pass123", user, { success = true }, {})
+            assertTrue("Should succeed for phone: $phone", success)
+        }
     }
 
     @Test
@@ -75,22 +83,36 @@ class AuthTests {
 
     @Test
     fun `Register with invalid phone number - validation error`() {
-        val user = AppUser(contact = "123")
+        val invalidPhones = listOf(
+            "123",                // Too short
+            "12345678901234567", // Too long (assuming 15 max)
+            "not-a-number"       // Not numeric
+        )
         val errorMsg = "Invalid phone number format."
+        
         every { authRepository.register(any(), any(), any(), any(), any()) } answers {
-            val onError = invocation.args[4] as (String) -> Unit
-            onError(errorMsg)
+            val userArg = invocation.args[2] as AppUser
+            val phone = userArg.contact
+            // Simulate validation logic: 7-15 digits, allows +, -, ., space, ()
+            val isValid = phone.length in 7..15 && phone.all { it.isDigit() || it in "+- .()" }
+            
+            if (isValid) {
+                (invocation.args[3] as () -> Unit).invoke()
+            } else {
+                (invocation.args[4] as (String) -> Unit).invoke(errorMsg)
+            }
         }
 
-        var errorReceived = ""
-        authRepository.register("123@phone.com", "pass123", user, {}, { errorReceived = it })
-
-        assertEquals(errorMsg, errorReceived)
+        invalidPhones.forEach { phone ->
+            val user = AppUser(contact = phone)
+            var errorReceived = ""
+            authRepository.register("$phone@phone.com", "pass123", user, {}, { errorReceived = it })
+            assertEquals("Should fail for phone: $phone", errorMsg, errorReceived)
+        }
     }
 
     @Test
     fun `Submit empty fields - handled by caller or repo`() {
-        // RegisterActivity handles this, but repo should also return error if attempted
         val user = AppUser(email = "")
         val errorMsg = "Email cannot be empty"
         every { authRepository.register("", any(), any(), any(), any()) } answers {

@@ -71,9 +71,6 @@ class NotificationsTests {
 
     @Test
     fun `Duplicate reservation - only one confirmation sent`() {
-        // This is typically handled at the application logic level before calling the repository
-        // or by the repository checking for existing pending jobs for the same user/event.
-        // Here we verify that we can call it once.
         val email = "user@example.com"
         every { notificationRepository.enqueueConfirmation(any(), email, any(), any(), any()) } answers {
             val onDone = invocation.args[3] as () -> Unit

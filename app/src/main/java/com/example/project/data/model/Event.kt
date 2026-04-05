@@ -6,6 +6,8 @@ data class Event(
     val location: String = "",
     val date: String = "",
     val category: String = "",
+    val description: String = "",
+    val price: Double = 0.0,
     val createdBy: String = "",
     val cancelled: Boolean = false
 )

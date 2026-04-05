@@ -9,10 +9,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * System Tests simulate end-to-end workflows by chaining repository interactions
- * as they would occur in the actual UI navigation.
- */
 class SystemTests {
 
     private val authRepo = mockk<AuthRepository>()
@@ -26,17 +22,14 @@ class SystemTests {
         val user = AppUser(uid = "u1", email = "test@test.com", contact = "5140000000")
         val event = Event(id = "e1", name = "System Test Event")
 
-        // 1. Register
         every { authRepo.register(any(), any(), any(), any(), any()) } answers {
             (it.invocation.args[3] as () -> Unit).invoke()
         }
         
-        // 2. Browse (Load events)
         every { eventRepo.getEvents(any()) } answers {
             (it.invocation.args[0] as (List<Event>) -> Unit).invoke(listOf(event))
         }
 
-        // 3. Book
         every { userRepo.getUser(user.uid, any()) } answers {
             (it.invocation.args[1] as (AppUser?) -> Unit).invoke(user)
         }
@@ -45,10 +38,8 @@ class SystemTests {
             onSuccess(Reservation(id = "r1", eventName = event.name))
         }
 
-        // 4. Confirmation
         every { notifRepo.enqueueConfirmation(any(), any(), any(), any(), any()) } just runs
 
-        // Execution of the flow
         authRepo.register(user.email, "pass", user, {
             eventRepo.getEvents { events ->
                 val selectedEvent = events.first()
@@ -76,7 +67,6 @@ class SystemTests {
             (it.invocation.args[0] as (List<Event>) -> Unit).invoke(events)
         }
 
-        // Simulating applying filters in the UI
         eventRepo.getEvents { all ->
             val filtered = all.filter { it.location == "Montreal" && it.category == "Music" }
             assertEquals(1, filtered.size)
@@ -95,13 +85,10 @@ class SystemTests {
             (it.invocation.args[1] as () -> Unit).invoke()
         }
 
-        // 1. User views reservations
         resRepo.getReservationsForUser("u1") { list ->
             assertTrue(list.any { it.id == "r1" })
-            
-            // 2. User cancels
+
             resRepo.cancelReservation(list.first(), {
-                // 3. User refreshes (simulate DB returning empty or updated)
                 every { resRepo.getReservationsForUser("u1", any()) } answers {
                     (it.invocation.args[1] as (List<Reservation>) -> Unit).invoke(emptyList())
                 }

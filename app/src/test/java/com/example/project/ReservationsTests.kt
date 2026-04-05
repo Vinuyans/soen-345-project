@@ -46,9 +46,6 @@ class ReservationsTests {
 
     @Test
     fun `Cancel reservation past event date - not allowed`() {
-        // Logic check: if event date < current date, don't allow.
-        // This might be in the Repository or ViewModel. 
-        // We simulate the repository enforcing this.
         val pastDate = "2020-01-01"
         val reservation = Reservation(id = "res123", date = pastDate)
         val errorMsg = "Cannot cancel a past event reservation"
@@ -74,7 +71,6 @@ class ReservationsTests {
 
     @Test
     fun `Cancel without being logged in - access denied`() {
-        // Assuming the repository or a wrapper checks for auth
         val errorMsg = "User not authenticated"
         every { reservationRepository.cancelReservation(any(), any(), any()) } answers {
             val onError = invocation.args[2] as (String) -> Unit

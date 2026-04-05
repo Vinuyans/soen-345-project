@@ -9,10 +9,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Acceptance Tests focus on business validation and end-user goals.
- * They ensure the "Happy Path" and key business requirements are met.
- */
 class AcceptanceTests {
 
     private val authRepo = mockk<AuthRepository>()
@@ -26,7 +22,6 @@ class AcceptanceTests {
         val user = AppUser(uid = "u1", email = "bob@example.com", contact = "514-555-1234")
         val event = Event(id = "e1", name = "Community Meetup")
 
-        // Setup
         every { authRepo.register(any(), any(), any(), any(), any()) } answers { (invocation.args[3] as () -> Unit).invoke() }
         every { eventRepo.getEvents(any()) } answers { (invocation.args[0] as (List<Event>) -> Unit).invoke(listOf(event)) }
         every { userRepo.getUser(any(), any()) } answers { (invocation.args[1] as (AppUser?) -> Unit).invoke(user) }
@@ -36,7 +31,6 @@ class AcceptanceTests {
         }
         every { notifRepo.enqueueConfirmation(any(), any(), any(), any(), any()) } just runs
 
-        // Business Action: User registers and then books an event
         var registered = false
         authRepo.register(user.email, "pass123", user, { registered = true }, {})
         
@@ -57,8 +51,7 @@ class AcceptanceTests {
             Event(name = "Coding", category = "Tech", location = "Lab"),
             Event(name = "Cooking", category = "Health", location = "Kitchen")
         )
-        
-        // Business Requirement: Show only Health events in the Park
+
         val filtered = events.filter { it.category == "Health" && it.location == "Park" }
         
         assertEquals(1, filtered.size)
@@ -71,7 +64,6 @@ class AcceptanceTests {
         
         every { resRepo.cancelReservation(any(), any(), any()) } answers { (invocation.args[1] as () -> Unit).invoke() }
 
-        // Action: User decides to cancel
         var cancelSuccess = false
         resRepo.cancelReservation(reservation, { cancelSuccess = true }, {})
         
@@ -88,11 +80,11 @@ class AcceptanceTests {
 
         var step = 0
         eventRepo.addEvent(event, { 
-            step++ // Created
+            step++
             eventRepo.updateEvent(event.copy(name = "Updated"), {
-                step++ // Updated
+                step++
                 eventRepo.cancelEvent(event, {
-                    step++ // Cancelled
+                    step++
                 }, {})
             }, {})
         }, {})

@@ -15,8 +15,6 @@ class EventsTests {
 
     private val eventRepository = mockk<EventRepository>()
 
-    // --- b. View list of available events ---
-
     @Test
     fun `View events when events exist - list displayed`() {
         val events = listOf(Event(id = "1", name = "Event 1"), Event(id = "2", name = "Event 2"))
@@ -69,8 +67,6 @@ class EventsTests {
 
         assertTrue(result!!.isEmpty())
     }
-
-    // --- c. Search and filter events ---
 
     private val allEvents = listOf(
         Event(id = "1", name = "Music Fest", location = "Montreal", category = "Music", date = "2023-12-01"),
@@ -130,8 +126,6 @@ class EventsTests {
         val matching = allEvents.filter { it.name.contains(keyword, ignoreCase = true) }
         assertEquals(3, matching.size) // Should show all
     }
-
-    // --- f. Add new event ---
 
     @Test
     fun `Add event with valid data - event created`() {
@@ -199,8 +193,6 @@ class EventsTests {
         assertEquals(errorMsg, error)
     }
 
-    // --- g. Edit an existing event ---
-
     @Test
     fun `Edit event with valid changes - update successful`() {
         val event = Event(id = "1", name = "Old Name")
@@ -259,8 +251,6 @@ class EventsTests {
         assertEquals(errorMsg, error)
     }
 
-    // --- h. Cancel an event ---
-
     @Test
     fun `Cancel existing event - event marked canceled`() {
         val event = Event(id = "1", cancelled = false)
@@ -292,8 +282,6 @@ class EventsTests {
 
     @Test
     fun `Cancel event with reservations - users notified`() {
-        // This test focuses on the repository call for cancellation.
-        // In a real scenario, this would trigger notification jobs.
         val event = Event(id = "1")
         every { eventRepository.cancelEvent(any(), any(), any()) } answers {
             val onSuccess = invocation.args[1] as () -> Unit
