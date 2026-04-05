@@ -23,7 +23,18 @@ jobs:
       - name: Load Google Service file
         env:
           DATA: ${{ secrets.GOOGLE_SERVICES_JSON }}
-        run: echo $DATA | base64 -di > app/google-services.json
+        run: |
+          if printf '%s' "$DATA" | grep -q '^[[:space:]]*{'; then
+            printf '%s' "$DATA" > app/google-services.json
+          else
+            printf '%s' "$DATA" | base64 --decode > app/google-services.json
+          fi
+
+          # Validate that the generated file is actually JSON.
+          if ! grep -q '^[[:space:]]*{' app/google-services.json; then
+            echo "google-services secret is neither raw JSON nor valid base64 JSON"
+            exit 1
+          fi
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -49,5 +60,6 @@ jobs:
         with:
           name: unit-test-reports
           path: |
-            app/build/reports/tests/
-            app/build/test-results/
+            app/build/reports/tests/testDebugUnitTest/**
+            app/build/test-results/testDebugUnitTest/**
+          if-no-files-found: warn
