@@ -16,8 +16,37 @@ class NotificationRepository {
         onError: (String) -> Unit
     ) {
         val channel = if (destination.contains("@")) "email" else "sms"
-        val id = notificationRef.push().key ?: return onError("Could not create notification job")
+        dispatch(userId, channel, destination, message, onDone, onError)
+    }
 
+    fun sendNotification(
+        userId: String,
+        email: String,
+        phone: String,
+        message: String,
+        onDone: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        dispatch(userId, "email", email, message,
+            onDone = {
+                if (phone.isNotBlank()) {
+                    dispatch(userId, "sms", phone, message, onDone = {}, onError = {})
+                }
+                onDone()
+            },
+            onError = onError
+        )
+    }
+
+    private fun dispatch(
+        userId: String,
+        channel: String,
+        destination: String,
+        message: String,
+        onDone: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val id = notificationRef.push().key ?: return onError("Could not create notification job")
         val job = NotificationJob(
             id = id,
             userId = userId,
@@ -26,7 +55,6 @@ class NotificationRepository {
             message = message,
             status = "pending"
         )
-
         notificationRef.child(id).setValue(job)
             .addOnSuccessListener {
                 val payload = hashMapOf(

@@ -28,6 +28,7 @@ class RegisterActivity : AppCompatActivity() {
         val contactInput = findViewById<EditText>(R.id.contactInput)
         val addressInput = findViewById<EditText>(R.id.addressInput)
         val passwordInput = findViewById<EditText>(R.id.passwordInput)
+        val notificationsCheck = findViewById<CheckBox>(R.id.notificationsCheck)
         val adminCheck = findViewById<CheckBox>(R.id.adminCheck)
         val adminCodeLayout = findViewById<TextInputLayout>(R.id.adminCodeLayout)
         val adminCodeInput = findViewById<EditText>(R.id.adminCodeInput)
@@ -45,6 +46,7 @@ class RegisterActivity : AppCompatActivity() {
             val contact = contactInput.text.toString().trim()
             val address = addressInput.text.toString().trim()
             val password = passwordInput.text.toString().trim()
+            val wantsNotifications = notificationsCheck.isChecked
             val wantsAdmin = adminCheck.isChecked
             val adminCode = adminCodeInput.text.toString().trim()
 
@@ -70,9 +72,10 @@ class RegisterActivity : AppCompatActivity() {
                 firstName = firstName,
                 lastName = lastName,
                 email = email,
-                contact = contact,
+                phone = contact,
                 homeAddress = address,
-                role = role.value
+                role = role.value,
+                notificationsEnabled = wantsNotifications
             )
 
             authRepository.register(

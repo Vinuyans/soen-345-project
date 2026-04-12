@@ -83,7 +83,7 @@ class UserFeedFragment : Fragment() {
         categoryInput.setAdapter(
             ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, categories)
         )
-        categoryInput.setText(getString(R.string.category_all), false)
+        categoryInput.setText(CATEGORY_ALL, false)
     }
 
     private fun setupDateRangeInput(root: View) {
@@ -119,7 +119,7 @@ class UserFeedFragment : Fragment() {
         selectedEndDateMillis = null
         dateRangeInput.setText("")
         locationInput.setText("")
-        categoryInput.setText(getString(R.string.category_all), false)
+        categoryInput.setText(CATEGORY_ALL, false)
         applyFilters(root)
     }
 
@@ -133,12 +133,14 @@ class UserFeedFragment : Fragment() {
         }
 
         reservationRepository.getReservationsForUser(uid) { reservations ->
+            if (!isAdded) return@getReservationsForUser
             bookedEventIds = reservations
                 .filter { it.status == "active" }
                 .map { it.eventId }
                 .toSet()
 
             eventRepository.getEvents { events ->
+                if (!isAdded) return@getEvents
                 allEvents = events.filter { !it.cancelled }
                 eventAdapter = EventAdapter(
                     canBook = true,
@@ -153,9 +155,9 @@ class UserFeedFragment : Fragment() {
     }
 
     private fun applyFilters(root: View) {
-        val emptyText = root.findViewById<TextView>(R.id.emptyStateText)
-        val locationFilter = root.findViewById<EditText>(R.id.locationFilterInput).text.toString().trim()
-        val categoryFilter = root.findViewById<AutoCompleteTextView>(R.id.categoryInput).text.toString().trim()
+        val emptyText = root.findViewById<TextView>(R.id.emptyStateText) ?: return
+        val locationFilter = root.findViewById<EditText>(R.id.locationFilterInput)?.text.toString().trim()
+        val categoryFilter = root.findViewById<AutoCompleteTextView>(R.id.categoryInput)?.text.toString().trim()
 
         val filtered = allEvents.filter { event ->
             val eventDate = parseDate(event.date)?.time
@@ -166,7 +168,7 @@ class UserFeedFragment : Fragment() {
                 else -> true
             }
             val matchesLocation = locationFilter.isBlank() || event.location.contains(locationFilter, ignoreCase = true)
-            val matchesCategory = categoryFilter.isBlank() || categoryFilter == getString(R.string.category_all) || event.category.equals(categoryFilter, ignoreCase = true)
+            val matchesCategory = categoryFilter.isBlank() || categoryFilter == CATEGORY_ALL || event.category.equals(categoryFilter, ignoreCase = true)
             matchesDate && matchesLocation && matchesCategory
         }
 
@@ -184,21 +186,24 @@ class UserFeedFragment : Fragment() {
 
             reservationRepository.reserve(
                 userId = uid,
-                contact = user.contact,
+                contact = user.phone,
                 event = event,
                 onSuccess = { reservation ->
-                    val message = "Reservation confirmed for ${reservation.eventName} on ${reservation.date} at ${reservation.location}."
-                    notificationRepository.enqueueConfirmation(
-                        userId = uid,
-                        destination = user.contact,
-                        message = message,
-                        onDone = {
-                            Toast.makeText(requireContext(), getString(R.string.notification_sent), Toast.LENGTH_SHORT).show()
-                        },
-                        onError = {
-                            Toast.makeText(requireContext(), getString(R.string.notification_failed), Toast.LENGTH_LONG).show()
-                        }
-                    )
+                    if (user.notificationsEnabled) {
+                        val message = "Reservation confirmed for ${reservation.eventName} on ${reservation.date} at ${reservation.location}."
+                        notificationRepository.sendNotification(
+                            userId = uid,
+                            email = user.email,
+                            phone = user.phone,
+                            message = message,
+                            onDone = {
+                                Toast.makeText(requireContext(), getString(R.string.notification_sent), Toast.LENGTH_SHORT).show()
+                            },
+                            onError = {
+                                Toast.makeText(requireContext(), getString(R.string.notification_failed), Toast.LENGTH_LONG).show()
+                            }
+                        )
+                    }
                     view?.let { loadEvents(it) }
                 },
                 onError = {
@@ -235,5 +240,6 @@ class UserFeedFragment : Fragment() {
     companion object {
         private const val DATE_PATTERN = "yyyy-MM-dd"
         private const val DATE_RANGE_PICKER_TAG = "user_date_range_picker"
+        private const val CATEGORY_ALL = "All"
     }
 }
