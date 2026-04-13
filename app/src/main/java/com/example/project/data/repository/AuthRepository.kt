@@ -2,11 +2,13 @@ package com.example.project.data.repository
 
 import com.example.project.data.model.AppUser
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 
-class AuthRepository {
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    private val databaseRef = database.reference
+class AuthRepository(
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val databaseRef: DatabaseReference = database.reference
+) {
 
     companion object {
         private val database: FirebaseDatabase by lazy {

@@ -1,12 +1,14 @@
 package com.example.project.data.repository
 
 import com.example.project.data.model.NotificationJob
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.functions.FirebaseFunctions
 
-class NotificationRepository {
-    private val notificationRef = FirebaseDatabase.getInstance().reference.child("notificationJobs")
-    private val functions = FirebaseFunctions.getInstance()
+class NotificationRepository(
+    private val notificationRef: DatabaseReference = FirebaseDatabase.getInstance().reference.child("notificationJobs"),
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance()
+) {
 
     fun enqueueConfirmation(
         userId: String,

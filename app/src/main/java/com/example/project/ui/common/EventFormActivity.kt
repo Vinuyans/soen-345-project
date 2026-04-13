@@ -14,6 +14,7 @@ import com.example.project.data.repository.AuthRepository
 import com.example.project.data.repository.EventRepository
 import com.example.project.data.repository.NotificationRepository
 import com.example.project.data.repository.ReservationRepository
+import com.example.project.data.repository.UserRepository
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -23,6 +24,7 @@ class EventFormActivity : AppCompatActivity() {
     private val eventRepository = EventRepository()
     private val reservationRepository = ReservationRepository()
     private val notificationRepository = NotificationRepository()
+    private val userRepository = UserRepository()
 
     private val dateFormatter = SimpleDateFormat(DATE_PATTERN, Locale.getDefault())
 
@@ -112,15 +114,38 @@ class EventFormActivity : AppCompatActivity() {
                 eventRepository.updateEvent(
                     event = event,
                     onSuccess = {
+                        var notificationToastShown = false
+                        fun showNotificationToastOnce(messageResId: Int) {
+                            if (!notificationToastShown) {
+                                notificationToastShown = true
+                                Toast.makeText(applicationContext, getString(messageResId), Toast.LENGTH_SHORT).show()
+                            }
+                        }
+
                         reservationRepository.getReservationsByEvent(event.id) { reservations ->
                             reservations.forEach { reservation ->
-                                notificationRepository.enqueueConfirmation(
-                                    userId = reservation.userId,
-                                    destination = reservation.contact,
-                                    message = "${event.name} was updated. New details: ${event.date}, ${event.location}.",
-                                    onDone = {},
-                                    onError = {}
-                                )
+                                val message = "${event.name} was updated. New details: ${event.date}, ${event.location}."
+                                userRepository.getUser(reservation.userId) { user ->
+                                    if (user != null && user.notificationsEnabled) {
+                                        notificationRepository.sendNotification(
+                                            userId = reservation.userId,
+                                            email = user.email,
+                                            phone = user.phone,
+                                            message = message,
+                                            onDone = { showNotificationToastOnce(R.string.notification_sent) },
+                                            onError = { showNotificationToastOnce(R.string.notification_failed) }
+                                        )
+                                    } else if (reservation.contact.isNotBlank()) {
+                                        // Fallback for older reservations that only stored one contact value.
+                                        notificationRepository.enqueueConfirmation(
+                                            userId = reservation.userId,
+                                            destination = reservation.contact,
+                                            message = message,
+                                            onDone = { showNotificationToastOnce(R.string.notification_sent) },
+                                            onError = { showNotificationToastOnce(R.string.notification_failed) }
+                                        )
+                                    }
+                                }
                             }
                         }
                         saveButton.isEnabled = true

@@ -2,10 +2,12 @@ package com.example.project.data.repository
 
 import com.example.project.data.model.Event
 import com.example.project.data.model.Reservation
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 
-class ReservationRepository {
-    private val reservationRef = FirebaseDatabase.getInstance().reference.child("reservations")
+class ReservationRepository(
+    private val reservationRef: DatabaseReference = FirebaseDatabase.getInstance().reference.child("reservations")
+) {
 
     fun getReservationsForUser(uid: String, onResult: (List<Reservation>) -> Unit) {
         reservationRef.get()
