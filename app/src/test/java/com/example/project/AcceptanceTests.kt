@@ -19,7 +19,7 @@ class AcceptanceTests {
 
     @Test
     fun `User can register and book events`() {
-        val user = AppUser(uid = "u1", email = "bob@example.com", contact = "514-555-1234")
+        val user = AppUser(uid = "u1", email = "bob@example.com", phone = "514-555-1234")
         val event = Event(id = "e1", name = "Community Meetup")
 
         every { authRepo.register(any(), any(), any(), any(), any()) } answers { (invocation.args[3] as () -> Unit).invoke() }
@@ -36,7 +36,7 @@ class AcceptanceTests {
         
         var reservationCreated = false
         if (registered) {
-            resRepo.reserve(user.uid, user.contact, event, {
+            resRepo.reserve(user.uid, user.phone, event, {
                 reservationCreated = true
             }, {})
         }

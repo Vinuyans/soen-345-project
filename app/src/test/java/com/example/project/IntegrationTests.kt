@@ -155,7 +155,7 @@ class IntegrationTests {
     fun `Given booking, When created, Then notification service is triggered`() {
         val resRepo = mockk<ReservationRepository>()
         val notifRepo = mockk<NotificationRepository>()
-        val user = AppUser(uid = "u1", contact = "test@test.com")
+        val user = AppUser(uid = "u1", email = "test@test.com")
         val event = Event(id = "e1", name = "Test Event")
 
         every { resRepo.reserve(any(), any(), any(), any(), any()) } answers {
@@ -167,8 +167,8 @@ class IntegrationTests {
             (invocation.args[3] as () -> Unit).invoke()
         }
 
-        resRepo.reserve(user.uid, user.contact, event, { reservation ->
-            notifRepo.enqueueConfirmation(user.uid, user.contact, "Booked ${reservation.eventName}", {}, {})
+        resRepo.reserve(user.uid, user.email, event, { reservation ->
+            notifRepo.enqueueConfirmation(user.uid, user.email, "Booked ${reservation.eventName}", {}, {})
         }, {})
 
         verify { notifRepo.enqueueConfirmation("u1", "test@test.com", match { it.contains("Test Event") }, any(), any()) }
