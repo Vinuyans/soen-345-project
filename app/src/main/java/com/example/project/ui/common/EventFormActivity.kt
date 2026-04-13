@@ -112,14 +112,25 @@ class EventFormActivity : AppCompatActivity() {
                 eventRepository.updateEvent(
                     event = event,
                     onSuccess = {
+                        var notificationToastShown = false
+                        fun showNotificationToastOnce(messageResId: Int) {
+                            if (!notificationToastShown) {
+                                notificationToastShown = true
+                                Toast.makeText(applicationContext, getString(messageResId), Toast.LENGTH_SHORT).show()
+                            }
+                        }
+
                         reservationRepository.getReservationsByEvent(event.id) { reservations ->
-                            reservations.forEach { reservation ->
+                            reservations
+                                .filter { it.status == "active" && it.contact.isNotBlank() }
+                                .forEach { reservation ->
+                                val message = "${event.name} was updated. New details: ${event.date}, ${event.location}."
                                 notificationRepository.enqueueConfirmation(
                                     userId = reservation.userId,
                                     destination = reservation.contact,
-                                    message = "${event.name} was updated. New details: ${event.date}, ${event.location}.",
-                                    onDone = {},
-                                    onError = {}
+                                    message = message,
+                                    onDone = { showNotificationToastOnce(R.string.notification_sent) },
+                                    onError = { showNotificationToastOnce(R.string.notification_failed) }
                                 )
                             }
                         }

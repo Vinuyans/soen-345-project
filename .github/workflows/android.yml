@@ -37,6 +37,9 @@ jobs:
       - name: Run unit tests
         run: ./gradlew :app:testDebugUnitTest
 
+      - name: Generate unit test coverage report
+        run: ./gradlew :app:createDebugUnitTestCoverageReport
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
@@ -51,4 +54,14 @@ jobs:
           path: |
             app/build/reports/tests/testDebugUnitTest/**
             app/build/test-results/testDebugUnitTest/**
+          if-no-files-found: warn
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-coverage-reports
+          path: |
+            app/build/reports/coverage/test/debug/**
+            app/build/reports/coverage/**
           if-no-files-found: warn

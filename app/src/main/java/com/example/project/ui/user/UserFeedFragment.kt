@@ -186,7 +186,7 @@ class UserFeedFragment : Fragment() {
 
             reservationRepository.reserve(
                 userId = uid,
-                contact = user.phone,
+                contact = if (user.phone.isNotBlank()) user.phone else user.email,
                 event = event,
                 onSuccess = { reservation ->
                     if (user.notificationsEnabled) {
