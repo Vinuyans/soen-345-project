@@ -2,10 +2,12 @@ package com.example.project.data.repository
 
 import com.example.project.data.model.AppUser
 import com.example.project.data.model.UserRole
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 
-class UserRepository {
-    private val usersRef = FirebaseDatabase.getInstance().reference.child("users")
+class UserRepository(
+    private val usersRef: DatabaseReference = FirebaseDatabase.getInstance().reference.child("users")
+) {
 
     fun getUser(uid: String, onResult: (AppUser?) -> Unit) {
         usersRef.child(uid).get()

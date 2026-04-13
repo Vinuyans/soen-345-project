@@ -1,10 +1,12 @@
 package com.example.project.data.repository
 
 import com.example.project.data.model.Event
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 
-class EventRepository {
-    private val eventsRef = FirebaseDatabase.getInstance().reference.child("events")
+class EventRepository(
+    private val eventsRef: DatabaseReference = FirebaseDatabase.getInstance().reference.child("events")
+) {
 
     fun getEvents(onResult: (List<Event>) -> Unit) {
         eventsRef.get()
