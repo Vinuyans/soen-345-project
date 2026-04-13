@@ -63,6 +63,7 @@
     <string name="category_travel">Travel</string>
     <string name="category_sports">Sports</string>
     <string name="category_other">Other</string>
+    <string name="error_invalid_phone">Invalid phone number.</string>
     <string-array name="event_categories">
         <item>@string/category_all</item>
         <item>@string/category_movie</item>

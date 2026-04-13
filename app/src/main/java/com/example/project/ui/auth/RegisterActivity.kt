@@ -34,6 +34,8 @@ class RegisterActivity : AppCompatActivity() {
         val adminCodeInput = findViewById<EditText>(R.id.adminCodeInput)
         val registerButton = findViewById<Button>(R.id.registerButton)
 
+        val phoneRegex = Regex("^(\\+\\d{1,2}\\s?)?1?\\-?\\.?\\s?\\(?\\d{3}\\)?[\\s.-]?\\d{3}[\\s.-]?\\d{4}\$")
+
         adminCheck.setOnCheckedChangeListener { _, isChecked ->
             adminCodeLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
             adminCodeInput.visibility = if (isChecked) View.VISIBLE else View.GONE
@@ -52,6 +54,11 @@ class RegisterActivity : AppCompatActivity() {
 
             if (firstName.isBlank() || lastName.isBlank() || email.isBlank() || contact.isBlank() || address.isBlank() || password.isBlank()) {
                 Toast.makeText(this, getString(R.string.error_fill_required), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if(!phoneRegex.containsMatchIn(contact)) {
+                Toast.makeText(this, getString(R.string.error_invalid_phone), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
