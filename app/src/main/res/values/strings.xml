@@ -11,6 +11,8 @@
     <string name="first_name">First Name</string>
     <string name="last_name">Last Name</string>
     <string name="contact">Phone Number or Email</string>
+    <string name="phone_number_optional">Phone Number (optional, for SMS)</string>
+    <string name="receive_notifications">Receive email &amp; SMS notifications</string>
     <string name="home_address">Home Address</string>
     <string name="admin_signup">Sign up as Admin</string>
     <string name="admin_code">Admin Code</string>

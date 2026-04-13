@@ -5,9 +5,10 @@ data class AppUser(
     val firstName: String = "",
     val lastName: String = "",
     val email: String = "",
-    val contact: String = "",
+    val phone: String = "",
     val homeAddress: String = "",
-    val role: String = UserRole.USER.value
+    val role: String = UserRole.USER.value,
+    val notificationsEnabled: Boolean = true
 )
 
 enum class UserRole(val value: String) {

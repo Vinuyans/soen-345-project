@@ -19,7 +19,7 @@ class SystemTests {
 
     @Test
     fun `User booking flow - Register to Booked`() {
-        val user = AppUser(uid = "u1", email = "test@test.com", contact = "5140000000")
+        val user = AppUser(uid = "u1", email = "test@test.com", phone = "5140000000")
         val event = Event(id = "e1", name = "System Test Event")
 
         every { authRepo.register(any(), any(), any(), any(), any()) } answers {
@@ -33,7 +33,7 @@ class SystemTests {
         every { userRepo.getUser(user.uid, any()) } answers {
             (it.invocation.args[1] as (AppUser?) -> Unit).invoke(user)
         }
-        every { resRepo.reserve(user.uid, user.contact, event, any(), any()) } answers {
+        every { resRepo.reserve(user.uid, user.phone, event, any(), any()) } answers {
             val onSuccess = it.invocation.args[3] as (Reservation) -> Unit
             onSuccess(Reservation(id = "r1", eventName = event.name))
         }
@@ -44,8 +44,8 @@ class SystemTests {
             eventRepo.getEvents { events ->
                 val selectedEvent = events.first()
                 userRepo.getUser(user.uid) { profile ->
-                    resRepo.reserve(profile!!.uid, profile.contact, selectedEvent, { res ->
-                        notifRepo.enqueueConfirmation(profile.uid, profile.contact, "Success", {}, {})
+                    resRepo.reserve(profile!!.uid, profile.phone, selectedEvent, { res ->
+                        notifRepo.enqueueConfirmation(profile.uid, profile.phone, "Success", {}, {})
                     }, {})
                 }
             }

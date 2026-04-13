@@ -13,12 +13,14 @@ import com.example.project.R
 import com.example.project.data.repository.AuthRepository
 import com.example.project.data.repository.NotificationRepository
 import com.example.project.data.repository.ReservationRepository
+import com.example.project.data.repository.UserRepository
 import com.example.project.ui.common.ReservationAdapter
 
 class ReservationsFragment : Fragment() {
     private val authRepository = AuthRepository()
     private val reservationRepository = ReservationRepository()
     private val notificationRepository = NotificationRepository()
+    private val userRepository = UserRepository()
 
     private lateinit var adapter: ReservationAdapter
 
@@ -41,13 +43,20 @@ class ReservationsFragment : Fragment() {
                 reservation,
                 onSuccess = {
                     Toast.makeText(requireContext(), getString(R.string.reservation_cancelled), Toast.LENGTH_SHORT).show()
-                    notificationRepository.enqueueConfirmation(
-                        userId = reservation.userId,
-                        destination = reservation.contact,
-                        message = "Your reservation for ${reservation.eventName} has been cancelled.",
-                        onDone = {},
-                        onError = {}
-                    )
+                    val uid = reservation.userId
+                    userRepository.getUser(uid) { user ->
+                        if (user != null && user.notificationsEnabled) {
+                            val message = "Your reservation for ${reservation.eventName} has been cancelled."
+                            notificationRepository.sendNotification(
+                                userId = uid,
+                                email = user.email,
+                                phone = user.phone,
+                                message = message,
+                                onDone = {},
+                                onError = {}
+                            )
+                        }
+                    }
                     loadReservations(view)
                 },
                 onError = {

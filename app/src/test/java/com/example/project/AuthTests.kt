@@ -104,7 +104,7 @@ class AuthTests {
                 onSuccess()
             }
 
-            val user = AppUser(contact = phone, email = "$phone@phone.com")
+            val user = AppUser(phone = phone, email = "$phone@phone.com")
             var success = false
             authRepository.register("$phone@phone.com", "pass123", user, { success = true }, {})
             assertTrue("Should succeed for phone: $phone", success)
@@ -133,7 +133,7 @@ class AuthTests {
             
             every { authRepository.register(any(), any(), any(), any(), any()) } answers {
                 val userArg = invocation.args[2] as AppUser
-                val p = userArg.contact
+                val p = userArg.phone
                 // Simulate validation logic: 7-15 digits, allows +, -, ., space, ()
                 val isValid = p.length in 7..15 && p.all { it.isDigit() || it in "+- .()" }
                 
@@ -144,7 +144,7 @@ class AuthTests {
                 }
             }
 
-            val user = AppUser(contact = phone)
+            val user = AppUser(phone = phone)
             var errorReceived = ""
             authRepository.register("$phone@phone.com", "pass123", user, {}, { errorReceived = it })
             assertEquals("Should fail for phone: $phone", errorMsg, errorReceived)
